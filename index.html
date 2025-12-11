@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飞机大战</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="gameStart" class="game-state">
+            <h1>飞机大战</h1>
+            <button id="startBtn">开始游戏</button>
+            <button id="settingsBtn">设置</button>
+        </div>
+        <div id="gameSettings" class="game-state hidden">
+            <h2>设置</h2>
+            <div class="setting-item">
+                <label for="sensitivitySlider">键盘灵敏度: <span id="sensitivityValue">5</span></label>
+                <input type="range" id="sensitivitySlider" min="1" max="10" value="5">
+            </div>
+            <div class="setting-item">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="soundToggle" checked>
+                    音效
+                </label>
+            </div>
+            <div class="setting-item">
+                <label for="volumeSlider">音量: <span id="volumeValue">50</span>%</label>
+                <input type="range" id="volumeSlider" min="0" max="100" value="50">
+            </div>
+            <div class="setting-buttons">
+                <button id="saveSettingsBtn">保存</button>
+                <button id="backBtn">返回</button>
+            </div>
+        </div>
+        <div id="gameOver" class="game-state hidden">
+            <h2>游戏结束</h2>
+            <p>最终得分: <span id="finalScore">0</span></p>
+            <p>最高分: <span id="highScore">0</span></p>
+            <button id="restartBtn">重新开始</button>
+            <button id="menuBtn">返回菜单</button>
+        </div>
+        <div id="gameScore" class="score">
+            <span>分数: <span id="currentScore">0</span></span>
+        </div>
+        <!-- 道具获取提示 -->
+        <div id="propNotification" class="prop-notification hidden">
+            <div class="prop-name">道具名称</div>
+            <div class="prop-description">道具功能说明</div>
+        </div>
+        
+        <!-- 激活的buff状态显示 -->
+        <div id="activeBuffs" class="active-buffs"></div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

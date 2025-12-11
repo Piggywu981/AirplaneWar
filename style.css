@@ -1,0 +1,324 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #000;
+    overflow: hidden;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+#gameCanvas {
+    display: block;
+    background-color: #000;
+    width: 100%;
+    height: 100%;
+}
+
+.game-state {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #fff;
+    z-index: 10;
+}
+
+.game-state h1 {
+    font-size: 48px;
+    margin-bottom: 30px;
+    color: #ff6b6b;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.game-state h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #ff6b6b;
+}
+
+.game-state p {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+.game-state button {
+    background-color: #4ecdc4;
+    color: #000;
+    border: none;
+    padding: 15px 30px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 10px 5px;
+}
+
+.game-state button:hover {
+    background-color: #45b7aa;
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.game-state button:active {
+    transform: scale(0.95);
+}
+
+.setting-item {
+    margin: 30px 0;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.setting-item label {
+    display: block;
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 15px;
+    cursor: pointer;
+    accent-color: #4ecdc4;
+}
+
+.checkbox-label input[type="checkbox"]:hover {
+    accent-color: #45b7aa;
+}
+
+.setting-item input[type="range"] {
+    width: 100%;
+    height: 8px;
+    background: #333;
+    border-radius: 5px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.setting-item input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: #4ecdc4;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.setting-item input[type="range"]::-webkit-slider-thumb:hover {
+    background: #45b7aa;
+    transform: scale(1.2);
+}
+
+.setting-item input[type="range"]::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #4ecdc4;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.setting-item input[type="range"]::-moz-range-thumb:hover {
+    background: #45b7aa;
+    transform: scale(1.2);
+}
+
+.setting-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 40px;
+}
+
+#sensitivityValue {
+    color: #4ecdc4;
+    font-weight: bold;
+}
+
+.hidden {
+    display: none;
+}
+
+.score {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    z-index: 5;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+#finalScore, #highScore {
+    color: #4ecdc4;
+    font-weight: bold;
+}
+
+/* 道具获取提示样式 */
+.prop-notification {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 3px solid #4ecdc4;
+    border-radius: 10px;
+    padding: 20px 40px;
+    text-align: center;
+    z-index: 20;
+    box-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
+    animation: blink 1.5s infinite alternate;
+    pointer-events: none; /* 不阻止点击穿透 */
+    max-width: 80%;
+    backdrop-filter: blur(5px);
+}
+
+.prop-name {
+    font-size: 48px;
+    font-weight: bold;
+    color: #4ecdc4;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(78, 205, 196, 0.8);
+}
+
+.prop-description {
+    font-size: 24px;
+    color: #fff;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+}
+
+/* 闪烁动画 */
+@keyframes blink {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.prop-notification.hidden {
+    display: none;
+}
+
+/* 激活的buff状态显示 */
+.active-buffs {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.buff-item {
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid #4ecdc4;
+    border-radius: 5px;
+    padding: 10px 15px;
+    color: #fff;
+    font-size: 16px;
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-width: 200px;
+    transition: all 0.3s ease;
+}
+
+.buff-name {
+    font-weight: bold;
+    color: #4ecdc4;
+}
+
+.buff-duration {
+    color: #feca57;
+    font-size: 14px;
+}
+
+.buff-progress {
+    width: 100%;
+    height: 5px;
+    background-color: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.buff-progress-bar {
+    height: 100%;
+    background-color: #4ecdc4;
+    transition: width 0.1s linear;
+}
+
+@media (max-width: 768px) {
+    .game-state h1 {
+        font-size: 36px;
+    }
+    
+    .game-state h2 {
+        font-size: 28px;
+    }
+    
+    .game-state p {
+        font-size: 20px;
+    }
+    
+    .game-state button {
+        padding: 12px 24px;
+        font-size: 18px;
+    }
+    
+    .score {
+        font-size: 20px;
+        top: 10px;
+        left: 10px;
+    }
+    
+    /* 响应式调整道具提示 */
+    .prop-name {
+        font-size: 32px;
+    }
+    
+    .prop-description {
+        font-size: 18px;
+    }
+    
+    .prop-notification {
+        padding: 15px 30px;
+    }
+}
