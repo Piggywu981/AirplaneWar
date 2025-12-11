@@ -81,34 +81,50 @@ class Game {
             this.keys[key] = false;
         });
         
-        // 触摸事件
-        let touchStartX = 0;
-        let touchStartY = 0;
+        // 触摸事件 - 跟随触摸点移动模式
+        let touchOffsetX = 0;
+        let touchOffsetY = 0;
+        let isTouching = false;
         
         this.canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
+            if (this.player) {
+                isTouching = true;
+                const touch = e.touches[0];
+                // 计算触摸点与飞机中心的偏移量
+                touchOffsetX = touch.clientX - (this.player.x + this.player.width / 2);
+                touchOffsetY = touch.clientY - (this.player.y + this.player.height / 2);
+            }
         });
         
         this.canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
-            if (this.player) {
-                const touchX = e.touches[0].clientX;
-                const touchY = e.touches[0].clientY;
-                const deltaX = touchX - touchStartX;
-                const deltaY = touchY - touchStartY;
+            if (this.player && isTouching) {
+                const touch = e.touches[0];
                 
-                this.player.x += deltaX * 0.5;
-                this.player.y += deltaY * 0.5;
+                // 直接根据触摸点位置和偏移量设置飞机位置
+                const targetX = touch.clientX - touchOffsetX - this.player.width / 2;
+                const targetY = touch.clientY - touchOffsetY - this.player.height / 2;
                 
-                touchStartX = touchX;
-                touchStartY = touchY;
+                // 使用平滑过渡，确保移动流畅
+                const smoothFactor = 0.8; // 平滑因子，值越大响应越快
+                this.player.x += (targetX - this.player.x) * smoothFactor;
+                this.player.y += (targetY - this.player.y) * smoothFactor;
                 
                 // 边界检测
                 this.player.x = Math.max(0, Math.min(this.canvas.width - this.player.width, this.player.x));
                 this.player.y = Math.max(0, Math.min(this.canvas.height - this.player.height, this.player.y));
             }
+        });
+        
+        this.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isTouching = false;
+        });
+        
+        this.canvas.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            isTouching = false;
         });
         
         // 按钮事件
