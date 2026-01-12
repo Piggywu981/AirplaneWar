@@ -30,6 +30,23 @@
                 <label for="volumeSlider">音量: <span id="volumeValue">50</span>%</label>
                 <input type="range" id="volumeSlider" min="0" max="100" value="50">
             </div>
+            <div class="setting-item">
+                <h3>控制方式</h3>
+                <div class="control-type-options">
+                    <label class="radio-label">
+                        <input type="radio" name="controlType" id="controlKeyboard" value="keyboard" checked>
+                        键盘控制
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="controlType" id="controlMouse" value="mouse">
+                        鼠标指针坐标控制
+                    </label>
+                </div>
+            </div>
+            <div class="setting-item">
+                <label for="scaleSlider">界面缩放: <span id="scaleValue">100</span>%</label>
+                <input type="range" id="scaleSlider" min="75" max="150" value="100" step="5">
+            </div>
             <div class="setting-buttons">
                 <button id="saveSettingsBtn">保存</button>
                 <button id="backBtn">返回</button>

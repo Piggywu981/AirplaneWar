@@ -7,11 +7,26 @@ class Game {
         this.score = 0;
         this.highScore = localStorage.getItem('highScore') || 0;
         
+        // 计算基于当前显示器分辨率的默认缩放比例
+        const calculateDefaultScale = () => {
+            // 获取屏幕高度
+            const screenHeight = window.innerHeight;
+            // 基于高度计算默认缩放比例
+            // 1080p 及以下使用 1.0（100%）
+            // 2K 分辨率使用 1.25（125%）
+            // 4K 及以上使用 1.5（150%）
+            if (screenHeight > 2160) return 1.5; // 4K+
+            if (screenHeight > 1080) return 1.25; // 2K
+            return 1.0; // 1080p 及以下
+        };
+        
         // 游戏设置
         this.settings = {
             keyboardSensitivity: 5,
             soundEnabled: true,
-            volume: 0.5
+            volume: 0.5,
+            controlType: 'keyboard', // keyboard 或 mouse
+            interfaceScale: calculateDefaultScale() // 界面缩放比例，范围 0.75-1.5
         };
         
         // 初始化音效管理器
@@ -30,6 +45,7 @@ class Game {
         
         // 游戏控制
         this.keys = {};
+        this.mousePos = { x: 0, y: 0 };
         this.lastShot = 0;
         this.shotInterval = 150; // 子弹发射间隔（毫秒），减小间隔增大开火密度
         this.enemySpawnInterval = 800; // 敌人生成间隔
@@ -60,6 +76,34 @@ class Game {
         
         // 游戏主循环
         this.gameLoop();
+    }
+    
+    // 应用界面缩放
+    applyInterfaceScale(scale) {
+        // 获取所有需要缩放的UI元素
+        const uiElements = [
+            'gameStart',
+            'gameSettings',
+            'gameOver'
+        ];
+        
+        uiElements.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                // 应用缩放，保持元素居中
+                element.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            }
+        });
+        
+        // 特殊处理非居中元素
+        const nonCenteredElements = ['gameScore', 'activeBuffs', 'propNotification'];
+        nonCenteredElements.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                // 这些元素不是居中的，只需要缩放
+                element.style.transform = `scale(${scale})`;
+            }
+        });
     }
     
     resizeCanvas() {
@@ -127,6 +171,14 @@ class Game {
             isTouching = false;
         });
         
+        // 鼠标移动事件 - 鼠标指针坐标控制模式
+        this.canvas.addEventListener('mousemove', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            // 计算鼠标在画布内的精确坐标
+            this.mousePos.x = e.clientX - rect.left;
+            this.mousePos.y = e.clientY - rect.top;
+        });
+        
         // 按钮事件
         document.getElementById('startBtn').addEventListener('click', () => {
             this.startGame();
@@ -177,6 +229,17 @@ class Game {
             volumeValue.textContent = volume;
             this.soundManager.setVolume(volume / 100);
         });
+        
+        // 缩放滑块事件
+        const scaleSlider = document.getElementById('scaleSlider');
+        const scaleValue = document.getElementById('scaleValue');
+        
+        scaleSlider.addEventListener('input', (e) => {
+            const scale = parseInt(e.target.value);
+            scaleValue.textContent = scale;
+            // 实时应用缩放
+            this.applyInterfaceScale(scale / 100);
+        });
     }
     
     // 加载设置
@@ -195,6 +258,17 @@ class Game {
         document.getElementById('volumeSlider').value = this.settings.volume * 100;
         document.getElementById('volumeValue').textContent = Math.round(this.settings.volume * 100);
         
+        // 更新控制方式设置
+        document.getElementById('controlKeyboard').checked = this.settings.controlType === 'keyboard';
+        document.getElementById('controlMouse').checked = this.settings.controlType === 'mouse';
+        
+        // 更新缩放设置
+        document.getElementById('scaleSlider').value = this.settings.interfaceScale * 100;
+        document.getElementById('scaleValue').textContent = Math.round(this.settings.interfaceScale * 100);
+        
+        // 应用缩放
+        this.applyInterfaceScale(this.settings.interfaceScale);
+        
         // 更新音效管理器
         this.soundManager.setMuted(!this.settings.soundEnabled);
         this.soundManager.setVolume(this.settings.volume);
@@ -206,10 +280,18 @@ class Game {
         const soundEnabled = document.getElementById('soundToggle').checked;
         const volume = parseInt(document.getElementById('volumeSlider').value) / 100;
         
+        // 获取选中的控制方式
+        const controlType = document.querySelector('input[name="controlType"]:checked').value;
+        
+        // 获取缩放比例
+        const interfaceScale = parseInt(document.getElementById('scaleSlider').value) / 100;
+        
         this.settings = {
             keyboardSensitivity: sensitivity,
             soundEnabled: soundEnabled,
-            volume: volume
+            volume: volume,
+            controlType: controlType,
+            interfaceScale: interfaceScale
         };
         
         localStorage.setItem('gameSettings', JSON.stringify(this.settings));
@@ -246,6 +328,7 @@ class Game {
         this.bullets = [];
         this.enemies = [];
         this.particles = [];
+        this.activeBuffs = []; // 清空激活的buff列表
         
         // 创建玩家飞机，传递灵敏度设置
         this.player = new Player(
@@ -259,6 +342,21 @@ class Game {
         // 隐藏开始界面
         document.getElementById('gameStart').classList.add('hidden');
         document.getElementById('gameOver').classList.add('hidden');
+        
+        // 重置技能提示
+        // 1. 隐藏道具通知
+        const propNotification = document.getElementById('propNotification');
+        propNotification.classList.add('hidden');
+        
+        // 2. 清除道具通知定时器
+        if (this.propNotificationTimeout) {
+            clearTimeout(this.propNotificationTimeout);
+            this.propNotificationTimeout = null;
+        }
+        
+        // 3. 更新activeBuffs显示
+        const activeBuffsContainer = document.getElementById('activeBuffs');
+        activeBuffsContainer.innerHTML = '';
     }
     
     restartGame() {
@@ -276,6 +374,24 @@ class Game {
             this.highScore = this.score;
             localStorage.setItem('highScore', this.highScore);
         }
+        
+        // 隐藏所有技能提示
+        // 1. 隐藏道具通知
+        const propNotification = document.getElementById('propNotification');
+        propNotification.classList.add('hidden');
+        
+        // 2. 清除道具通知定时器
+        if (this.propNotificationTimeout) {
+            clearTimeout(this.propNotificationTimeout);
+            this.propNotificationTimeout = null;
+        }
+        
+        // 3. 清空activeBuffs数组
+        this.activeBuffs = [];
+        
+        // 4. 更新activeBuffs显示
+        const activeBuffsContainer = document.getElementById('activeBuffs');
+        activeBuffsContainer.innerHTML = '';
         
         // 显示游戏结束界面
         document.getElementById('finalScore').textContent = this.score;
@@ -343,7 +459,7 @@ class Game {
         if (this.gameState !== 'playing') return;
         
         // 更新玩家
-        this.player.update(this.keys, this.canvas.width, this.canvas.height);
+        this.player.update(this.keys, this.mousePos, this.settings.controlType, this.canvas.width, this.canvas.height);
         
         // 发射子弹
         this.shoot();
@@ -741,24 +857,31 @@ class Player {
         this.shieldActive = false; // 护盾状态
     }
     
-    update(keys, canvasWidth, canvasHeight) {
-        // 检查Shift键状态，按住Shift键降低灵敏度（系数0.5）
-        // 由于按键已转换为小写，需要检查小写的shift键
-        const shiftPressed = keys['shift'] || keys['shiftleft'] || keys['shiftright'];
-        const actualSpeed = shiftPressed ? this.speed * 0.5 : this.speed;
-        
-        // 键盘控制
-        if (keys['ArrowLeft'] || keys['a']) {
-            this.x -= actualSpeed;
-        }
-        if (keys['ArrowRight'] || keys['d']) {
-            this.x += actualSpeed;
-        }
-        if (keys['ArrowUp'] || keys['w']) {
-            this.y -= actualSpeed;
-        }
-        if (keys['ArrowDown'] || keys['s']) {
-            this.y += actualSpeed;
+    update(keys, mousePos, controlType, canvasWidth, canvasHeight) {
+        if (controlType === 'mouse') {
+            // 鼠标指针坐标控制：将飞机中心精确对准鼠标指针
+            this.x = mousePos.x - this.width / 2;
+            this.y = mousePos.y - this.height / 2;
+        } else {
+            // 键盘控制
+            // 检查Shift键状态，按住Shift键降低灵敏度（系数0.5）
+            // 由于按键已转换为小写，需要检查小写的shift键
+            const shiftPressed = keys['shift'] || keys['shiftleft'] || keys['shiftright'];
+            const actualSpeed = shiftPressed ? this.speed * 0.5 : this.speed;
+            
+            // 键盘控制
+            if (keys['ArrowLeft'] || keys['a']) {
+                this.x -= actualSpeed;
+            }
+            if (keys['ArrowRight'] || keys['d']) {
+                this.x += actualSpeed;
+            }
+            if (keys['ArrowUp'] || keys['w']) {
+                this.y -= actualSpeed;
+            }
+            if (keys['ArrowDown'] || keys['s']) {
+                this.y += actualSpeed;
+            }
         }
         
         // 边界检测
